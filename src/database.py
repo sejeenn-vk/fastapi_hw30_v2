@@ -1,8 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import select
-from src.data_for_recipes import recipes, ingredients, ingredients_to_recipes
 from src.models import Base, Recipe, Ingredient, IngredientsInRecipe
 
+# if test_config is None:
+#         db_name = 'sqlite:///parking.db'
+#     else:
+#         db_name = 'sqlite:///test.db'
+#
 async_engine = create_async_engine("sqlite+aiosqlite:///./app.db")
 async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -103,7 +107,7 @@ async def add_recipe(new_recipe):
             return new_recipe.id
 
 
-async def create_db_and_insert_data():
+async def create_db_and_insert_data(recipes, ingredients, ingredients_to_recipes):
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

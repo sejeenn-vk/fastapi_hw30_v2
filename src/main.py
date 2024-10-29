@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from src.database import create_db_and_insert_data, all_recipes, detail_recipe, add_recipe, add_data
 from src.models import Recipe, Ingredient, IngredientsInRecipe
 from src.schemas import RecipeDetail, RecipeIn, RecipeOut
+from src.data_for_recipes import recipes, ingredients, ingredients_to_recipes
 
 app = FastAPI()
 
@@ -16,7 +17,7 @@ def main_page():
 @app.get("/create_db")
 async def create_db():
     # Создание базы данных и наполнение ее какими-то данными
-    await create_db_and_insert_data()
+    await create_db_and_insert_data(recipes, ingredients, ingredients_to_recipes)
     return {'message': "База данных создана"}
 
 
