@@ -1,4 +1,5 @@
 import uvicorn
+import asyncio
 from fastapi import FastAPI
 from src.database import create_db_and_insert_data, all_recipes, detail_recipe, add_recipe, add_data
 from src.models import Recipe, Ingredient, IngredientsInRecipe

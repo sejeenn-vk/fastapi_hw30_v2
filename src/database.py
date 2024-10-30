@@ -7,6 +7,7 @@ from src.models import Base, Recipe, Ingredient, IngredientsInRecipe
 #     else:
 #         db_name = 'sqlite:///test.db'
 #
+# SQLALCHEMY_DATABASE_URL = "sqlite:///tests/test.db"
 async_engine = create_async_engine("sqlite+aiosqlite:///./app.db")
 async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
