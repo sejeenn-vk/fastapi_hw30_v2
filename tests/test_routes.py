@@ -1,16 +1,11 @@
-from tests.conftest import test_client, test_db
+from tests.conftest import async_client, test_db
+import pytest
 from sqlalchemy import select
 from src.models import Recipe
 
 
-def test_main_page(test_client):
-    response = test_client.get("/")
+async def test_main_page(async_client, test_db):
+    response = await async_client.get("/")
     assert response.status_code == 200
     assert response.json() == {'message': 'Main page'}
-
-
-def test_database(test_client, test_db):
-    stmt = select(Recipe)
-    result = test_db.execute(stmt)
-    print(result.scalars().all())
 

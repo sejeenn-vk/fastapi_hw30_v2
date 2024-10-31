@@ -2,14 +2,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy import select
 from src.models import Base, Recipe, Ingredient, IngredientsInRecipe
 
-# if test_config is None:
-#         db_name = 'sqlite:///parking.db'
-#     else:
-#         db_name = 'sqlite:///test.db'
-#
-# SQLALCHEMY_DATABASE_URL = "sqlite:///tests/test.db"
-async_engine = create_async_engine("sqlite+aiosqlite:///./app.db")
-async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+
+async_engine = create_async_engine("sqlite+aiosqlite:///./app.db", echo=True)
+# async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = async_sessionmaker(async_engine)
+
+
+async def get_db():
+    db = async_session_factory()
+    try:
+        yield db
+    finally:
+        await db.close()
 
 
 async def all_recipes():
@@ -22,7 +26,8 @@ async def all_recipes():
     - Количество просмотров.
     :return: Список рецептов.
     """
-    async with async_session() as session:
+    async with async_session_factory() as session:
+
         stmt = select(Recipe).order_by(-Recipe.views, Recipe.cooking_time)
         result = await session.execute(stmt)
         return result
@@ -39,7 +44,7 @@ async def detail_recipe(recipe_id: int):
     :param recipe_id: Id рецепта, который хотим посмотреть.
     :return:
     """
-    async with async_session() as session:
+    async with async_session_factory() as session:
         result = await session.execute(
             select(Recipe).filter(Recipe.id == recipe_id)
         )
@@ -89,7 +94,7 @@ async def add_data(*objs):
     :param objs: Список объектов (Recipe, Ingredients или IngredientsInRecipe)
     :return: None
     """
-    async with async_session() as session:
+    async with async_session_factory() as session:
         async with session.begin():
             session.add_all(*objs)
 
@@ -101,7 +106,7 @@ async def add_recipe(new_recipe):
     :param new_recipe:
     :return: recipe_id
     """
-    async with async_session() as session:
+    async with async_session_factory() as session:
         async with session.begin():
             session.add(new_recipe)
             await session.commit()

@@ -45,7 +45,7 @@ async def add_new_recipe(recipe: RecipeIn):
         cooking_time=recipe.cooking_time,
         recipe_description=recipe.recipe_description,
     )
-    ingredients = recipe.ingredients
+    products = recipe.ingredients
     new_recipe_id = await add_recipe(new_recipe)
     ingredients_in_recipe = [
         IngredientsInRecipe(
@@ -53,7 +53,7 @@ async def add_new_recipe(recipe: RecipeIn):
             ingredient_id=i.ingredient_id,
             quantity=i.quantity,
         )
-        for i in ingredients
+        for i in products
     ]
     if new_recipe_id:
         await add_data(ingredients_in_recipe)

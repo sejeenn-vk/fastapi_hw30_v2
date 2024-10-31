@@ -1,35 +1,55 @@
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, insert
-from sqlalchemy.orm import sessionmaker
-
 from src.main import app
-from src.models import Base, Recipe
-from src.database import add_data
-from tests.data_for_test_db import recipes, ingredients_to_recipes, ingredients
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from src.models import Base
+from src.database import get_db
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///tests/test.db"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from typing import Generator, Any
+from asyncio import AbstractEventLoop
+from asyncio import get_event_loop_policy
+from httpx import AsyncClient, ASGITransport
 
-
-@pytest.fixture(scope="module")
-def test_client():
-    client = TestClient(app)
-    yield client
+async_engine_test = create_async_engine(url="sqlite+aiosqlite:///tests/test.db", echo=False)
+async_session_test = async_sessionmaker(async_engine_test, expire_on_commit=False)
 
 
-@pytest.fixture(scope="module")
-def test_db():
-    db = TestingSessionLocal()
-    Base.metadata.create_all(bind=engine)
-    db.add_all(recipes)
-    db.commit()
-    # print(stmt)
+async def override_get_async_session():
+    # Переопределение используемой базы данных
+    async with async_session_test() as session:
+        yield session
 
-    yield db
-    # Base.metadata.drop_all(bind=engine)
-    db.close()
+# Переопределение используемой базы данных
+app.dependency_overrides[get_db] = override_get_async_session
 
+
+@pytest.fixture(scope="session", autouse=True)
+async def test_db():
+    async with async_engine_test.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield
+    # async with async_engine_test.begin() as conn:
+    #     await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture
+async def async_session():
+    async with async_session_test() as session:
+        yield session
+
+
+@pytest.fixture(scope="session", autouse=True)
+def event_loop() -> Generator["AbstractEventLoop", Any, None]:
+    policy = get_event_loop_policy()
+    loop = policy.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture
+async def async_client():
+    async with AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://localhost:8000"
+    ) as ac:
+        yield ac
