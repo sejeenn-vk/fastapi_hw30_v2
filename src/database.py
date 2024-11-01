@@ -1,9 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import select
+
+from src.config import Settings
 from src.models import Base, Recipe, Ingredient, IngredientsInRecipe
 
 
-async_engine = create_async_engine("sqlite+aiosqlite:///./app.db", echo=True)
+async_engine = create_async_engine(url=Settings.DB_URL, echo=True)
 # async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 async_session_factory = async_sessionmaker(async_engine)
 

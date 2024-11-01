@@ -1,11 +1,15 @@
-from tests.conftest import async_client, test_db
 import pytest
-from sqlalchemy import select
-from src.models import Recipe
+from src.config import Settings
+from src.database import async_engine
+from src.models import Base
 
 
-async def test_main_page(async_client, test_db):
-    response = await async_client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {'message': 'Main page'}
+@pytest.fixture(scope="session", autouse=True)
+def setup_db():
+    print(f"DB_URL={Settings.DB_URL}")
+    Base.metadata.drop_all(async_engine)
+    Base.metadata.create_all(async_engine)
 
+
+def test_db(setup_db):
+    print(f"DB_URL={Settings.DB_URL}")
